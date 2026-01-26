@@ -34,7 +34,17 @@ class Storage:
     def get_all_tasks(self):
         with self._connect() as conn:
             rows = conn.execute("SELECT * FROM tasks").fetchall()
-            return [Task(row[1], row[2], row[3], row[4], bool(row[5])) for row in rows]
+            return [
+                Task(row[1], row[2], row[3], row[4], bool(row[5]), task_id=row[0])
+                for row in rows
+            ]
+
+    def get_task(self, task_id):
+        with self._connect() as conn:
+            row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+            if row:
+                return Task(row[1], row[2], row[3], row[4], bool(row[5]), task_id=row[0])
+            return None
 
     def update_task(self, task_id, **kwargs):
         fields = []
@@ -50,6 +60,9 @@ class Storage:
                 SET {', '.join(fields)}
                 WHERE id = ?
             """, values)
+
+    def complete_task(self, task_id):
+        self.update_task(task_id, completed=1)
 
     def delete_task(self, task_id):
         with self._connect() as conn:
