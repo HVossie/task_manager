@@ -2,6 +2,7 @@ from task import Task
 from storage import Storage
 
 storage = Storage()
+VALID_PRIORITIES = {"low", "medium", "high"}
 
 
 def print_tasks(tasks):
@@ -15,8 +16,8 @@ def print_tasks(tasks):
 
 
 def add_task():
-    title = input("Title: ").strip()
-    priority = input("Priority (low/medium/high): ").strip().lower()
+    title = get_non_empty_input("Title: ")
+    priority = get_valid_priority()
 
     task = Task(title=title, priority=priority)
     task_id = storage.add_task(task)
@@ -56,13 +57,25 @@ def view_tasks():
 
 
 def mark_completed():
-    task_id = input("Enter task ID to mark as completed: ").strip()
+    task_id = get_valid_task_id()
+
+    task = storage.get_task(task_id)
+    if not task:
+        print("Task not found.")
+        return
+
     storage.complete_task(task_id)
-    print("Task updated.")
+    print("Task marked as completed.")
 
 
 def delete_task():
-    task_id = input("Enter task ID to delete: ").strip()
+    task_id = get_valid_task_id()
+
+    task = storage.get_task(task_id)
+    if not task:
+        print("Task not found.")
+        return
+
     storage.delete_task(task_id)
     print("Task deleted.")
 
@@ -92,6 +105,26 @@ def menu():
         else:
             print("Invalid choice. Try again.")
 
+def get_non_empty_input(prompt):
+    while True:
+        value = input(prompt).strip()
+        if value:
+            return value
+        print("Input cannot be empty.")
+
+def get_valid_priority():
+    while True:
+        priority = input("Priority (low/medium/high): ").strip().lower()
+        if priority in VALID_PRIORITIES:
+            return priority
+        print("Invalid priority. Choose low, medium, or high.")
+
+def get_valid_task_id():
+    while True:
+        task_id = input("Enter task ID: ").strip()
+        if task_id.isdigit():
+            return int(task_id)
+        print("Task ID must be a number.")
 
 if __name__ == "__main__":
     menu()
