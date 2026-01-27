@@ -8,7 +8,7 @@ class Storage:
         self._create_table()
 
     def _connect(self):
-        return sqlite3.connect(self.db_path)
+        return sqlite3.connect(self.db_path, check_same_thread=False)
 
     def _create_table(self):
         with self._connect() as conn:
