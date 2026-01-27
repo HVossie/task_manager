@@ -4,6 +4,23 @@ from storage import Storage
 storage = Storage()
 VALID_PRIORITIES = {"low", "medium", "high"}
 
+def get_int_input(prompt, min_value=None, max_value=None):
+    while True:
+        try:
+            value = int(input(prompt))
+            
+            if min_value is not None and value < min_value:
+                print(f"Please enter a number >= {min_value}")
+                continue
+
+            if max_value is not None and value > max_value:
+                print(f"Please enter a number <= {max_value}")
+                continue
+
+            return value
+        
+        except ValueError:
+            print("Invalid input. Please enter a number")
 
 def print_tasks(tasks):
     if not tasks:
@@ -58,22 +75,16 @@ def view_tasks():
 
 def mark_completed():
     task_id = get_valid_task_id()
-
-    task = storage.get_task(task_id)
-    if not task:
-        print("Task not found.")
+    if task_id is None:
         return
-
+    
     storage.complete_task(task_id)
     print("Task marked as completed.")
 
 
 def delete_task():
     task_id = get_valid_task_id()
-
-    task = storage.get_task(task_id)
-    if not task:
-        print("Task not found.")
+    if task_id is None:
         return
 
     storage.delete_task(task_id)
@@ -89,17 +100,17 @@ def menu():
         print("4. Delete task")
         print("5. Exit")
 
-        choice = input("Choose an option: ").strip()
+        choice = get_int_input("Choose an option: ", 1, 5)
 
-        if choice == "1":
+        if choice == 1:
             add_task()
-        elif choice == "2":
+        elif choice == 2:
             view_tasks()
-        elif choice == "3":
+        elif choice == 3:
             mark_completed()
-        elif choice == "4":
+        elif choice == 4:
             delete_task()
-        elif choice == "5":
+        elif choice == 5:
             print("Goodbye!")
             break
         else:
@@ -120,11 +131,20 @@ def get_valid_priority():
         print("Invalid priority. Choose low, medium, or high.")
 
 def get_valid_task_id():
+    tasks = storage.get_all_tasks()
+    if not tasks:
+        print("No tasks available.")
+        return None
+    
+    valid_ids = {task.id for task in tasks}
+
     while True:
         task_id = input("Enter task ID: ").strip()
         if task_id.isdigit():
-            return int(task_id)
-        print("Task ID must be a number.")
+            task_id = int(task_id)
+            if task_id in valid_ids:
+                return task_id
+        print("Invalid task ID")
 
 if __name__ == "__main__":
     menu()
