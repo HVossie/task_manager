@@ -1,18 +1,42 @@
+"""
+Command Line Interface(CLI) for the Task Manager
+
+This module handles:
+- User interaction
+- Input validation
+- Menu navigation
+- Displaying tasks
+
+All the database operations are handed over to the Storage class.
+"""
+
 from task import Task
 from storage import Storage
 
+# Single storage instance used throughout
 storage = Storage()
+
+# Allowed priority values used for validation
 VALID_PRIORITIES = {"low", "medium", "high"}
 
 def get_int_input(prompt, min_value=None, max_value=None):
+    """
+    Request an integer from the user
+
+    Continue prompting until:
+    - a valid integer is entered
+    - optional min/max constraints are satisfied
+    """
     while True:
         try:
             value = int(input(prompt))
             
+            # Enforce minimum value if provided
             if min_value is not None and value < min_value:
                 print(f"Please enter a number >= {min_value}")
                 continue
 
+            #Enforce maximum value if provided
             if max_value is not None and value > max_value:
                 print(f"Please enter a number <= {max_value}")
                 continue
@@ -23,6 +47,9 @@ def get_int_input(prompt, min_value=None, max_value=None):
             print("Invalid input. Please enter a number")
 
 def print_tasks(tasks):
+    """
+    Display task in a readable CLI format.
+    """
     if not tasks:
         print("No tasks found.")
         return
@@ -33,6 +60,9 @@ def print_tasks(tasks):
 
 
 def add_task():
+    """
+    Create a new task based on user input.
+    """
     title = get_non_empty_input("Title: ")
     priority = get_valid_priority()
 
@@ -42,6 +72,9 @@ def add_task():
 
 
 def view_tasks():
+    """
+    Display tasks with optional filtering and sorting options.
+    """
     tasks = storage.get_all_tasks()
 
     if not tasks:
@@ -54,19 +87,21 @@ def view_tasks():
     print("3. Filter by completed")
     print("4. Sort by due date")
 
-    choice = input("Choose an option: ").strip()
+    choice = get_int_input("Choose an option: ",1 , 4)
 
+    #Filter by priority
     if choice == "2":
         priority = input("Enter priority (low/medium/high): ").strip().lower()
         tasks = [t for t in tasks if t.priority == priority]
 
+    #Filter by completion status
     elif choice == "3":
         completed_choice = input("Show completed only? (yes/no): ").strip().lower()
         if completed_choice == "yes":
             tasks = [t for t in tasks if t.completed]
         else:
             tasks = [t for t in tasks if not t.completed]
-
+    #Sort by due date (None values handled safely)
     elif choice == "4":
         tasks = sorted(tasks, key=lambda x: x.due_date or "")
 
@@ -74,7 +109,12 @@ def view_tasks():
 
 
 def mark_completed():
+    """
+    Mark an existing task as completed
+    """
     task_id = get_valid_task_id()
+
+    #User may exit if no task exists
     if task_id is None:
         return
     
@@ -83,6 +123,9 @@ def mark_completed():
 
 
 def delete_task():
+    """
+    Delete a task selected by user.
+    """
     task_id = get_valid_task_id()
     if task_id is None:
         return
@@ -92,6 +135,12 @@ def delete_task():
 
 
 def menu():
+    """
+    Main application loop
+
+    Displays menu options are routes user choices
+    to the appropriate functionality
+    """
     while True:
         print("\n--- TASK MANAGER ---")
         print("1. Add task")
@@ -117,6 +166,9 @@ def menu():
             print("Invalid choice. Try again.")
 
 def get_non_empty_input(prompt):
+    """
+    Ensure user input is not empty
+    """
     while True:
         value = input(prompt).strip()
         if value:
@@ -124,6 +176,9 @@ def get_non_empty_input(prompt):
         print("Input cannot be empty.")
 
 def get_valid_priority():
+    """
+    Validate priority input against allowed values.
+    """
     while True:
         priority = input("Priority (low/medium/high): ").strip().lower()
         if priority in VALID_PRIORITIES:
@@ -131,7 +186,16 @@ def get_valid_priority():
         print("Invalid priority. Choose low, medium, or high.")
 
 def get_valid_task_id():
+    """
+    Request a valid task ID from the user.
+
+    Ensures:
+    - task exists
+    - input is numeric
+    - ID exists in the database
+    """
     tasks = storage.get_all_tasks()
+
     if not tasks:
         print("No tasks available.")
         return None
@@ -146,5 +210,6 @@ def get_valid_task_id():
                 return task_id
         print("Invalid task ID")
 
+# Entry point
 if __name__ == "__main__":
     menu()
