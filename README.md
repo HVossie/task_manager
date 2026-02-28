@@ -11,6 +11,8 @@ This project was built as a portfolio piece for me to practice clean Python desi
 - Persistent storage using SQLite
 - Input validation to prevent crashes
 - Simple, readable CLI interface
+- Windows-safe unit tests using  in-memory SQLite database
+- Modular design with clear separation of concerns
 
 ## Tech Stack
 
@@ -38,6 +40,13 @@ cd task_manager
 python main.py
 ```
 
+4. Run the unit tests
+
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
+All tests are Windows-safe and use an in-memory database.
+
 ## Project Structure
 
 ```bash
@@ -46,23 +55,27 @@ task_manager/
 ├── task.py       # Task model
 ├── storage.py    # SQLite persistence layer
 ├── database.db   # Local database
+├── tests/        # Unit tests
+│   ├── test_task.py
+│   └── test_storage.py
 └── README.md
 ```
 
 ## What I Learned
 
 - Structuring a Python project with separation of concerns
+- Writing unit tests for data models and database interactions
 - Using SQLite for lightweight persistence
-- Writing defensive input validation
+- Implementing defensive input validation
 - Building a usable CLI application
 - Version control with Git and GitHub
 
 ## Possible Improvements
 
 - Add due date validation and sorting
-- Export tasks to CSV
-- Add unit tests
-- Improve CLI UX
+- Export tasks to CSV or JSON
+- Add more automated tests for edge cases
+- Improve CLI UX (colors, menus)
 
 ## Author
 
