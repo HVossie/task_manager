@@ -27,6 +27,7 @@ class Storage:
 
         Automatically creates the tasks table if it does not exist
         """
+        # Keeping the path configurable lets tests swap in a separate database.
         self.db_path = db_path
         self._create_table()
 
@@ -37,6 +38,8 @@ class Storage:
         check_same_thread=False allows connections to be used safely
         across different parts of the application.
         """
+        # Each method opens its own short-lived connection, which keeps the
+        # storage layer simple for a small CLI application.
         return sqlite3.connect(self.db_path, check_same_thread=False)
 
     def _create_table(self):
@@ -44,6 +47,8 @@ class Storage:
         Create the task table if it does not already exist
         """
         with self._connect() as conn:
+            # The schema mirrors the Task model closely, which keeps conversion
+            # between database rows and Python objects straightforward.
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS tasks (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,6 +72,7 @@ class Storage:
                 INSERT INTO tasks (title, description, priority, due_date, completed)
                 VALUES (?, ?, ?, ?, ?)
             """, (task.title, task.description, task.priority, task.due_date, int(task.completed)))
+            # SQLite exposes the generated primary key so the CLI can show it.
             return cursor.lastrowid
 
     def get_all_tasks(self):
@@ -78,6 +84,7 @@ class Storage:
         """
         with self._connect() as conn:
             rows = conn.execute("SELECT * FROM tasks").fetchall()
+            # Convert raw database rows into Task objects for the rest of the app.
             return [
                 Task(row[1], row[2], row[3], row[4], bool(row[5]), task_id=row[0])
                 for row in rows
@@ -109,13 +116,14 @@ class Storage:
         fields = []
         values = []
 
-        #Build SQL dynamically from provided fields
+        # Build the SET clause from whichever fields the caller wants to change.
         for key, value in kwargs.items():
             fields.append(f"{key} = ?")
             values.append(value)
         values.append(task_id)
 
         with self._connect() as conn:
+            # Parameter binding keeps values separate from the SQL statement.
             conn.execute(f"""
                 UPDATE tasks
                 SET {', '.join(fields)}

@@ -13,10 +13,11 @@ All database operations are handled by the Storage class.
 from task import Task
 from storage import Storage
 
-# Single storage instance used throughout the application
+# The CLI uses one shared storage object so every menu action talks to the
+# same database file during a run of the program.
 storage = Storage()
 
-# Allowed priority values for validation
+# Centralizing valid values here makes validation rules easy to find and update.
 VALID_PRIORITIES = {"low", "medium", "high"}
 
 # --- Menu constants for readability ---
@@ -43,6 +44,7 @@ def get_int_input(prompt, min_value=None, max_value=None):
     """
     while True:
         try:
+            # Convert raw user input into an integer before menu logic uses it.
             value = int(input(prompt))
             if min_value is not None and value < min_value:
                 print(f"Please enter a number >= {min_value}")
@@ -81,11 +83,13 @@ def get_valid_task_id():
     - task exists
     - input is numeric
     """
+    # Pull the current task list first so we can reject IDs that do not exist.
     tasks = storage.get_all_tasks()
     if not tasks:
         print("No tasks available.")
         return None
 
+    # A set gives fast membership checks while the user is entering IDs.
     valid_ids = {task.id for task in tasks}
     while True:
         task_id = input("Enter task ID: ").strip()
@@ -113,6 +117,7 @@ def add_task():
     title = get_non_empty_input("Title: ")
     priority = get_valid_priority()
 
+    # The Task object holds data in memory; Storage is responsible for saving it.
     task = Task(title=title, priority=priority)
     task_id = storage.add_task(task)
     print(f"Task added with ID: {task_id}")
@@ -121,6 +126,7 @@ def view_tasks():
     """
     Display tasks with optional filtering and sorting options.
     """
+    # Start from the full task list, then apply any filter or sort choice.
     tasks = storage.get_all_tasks()
     if not tasks:
         print("No tasks found.")
@@ -136,6 +142,7 @@ def view_tasks():
 
     if choice == VIEW_BY_PRIORITY:
         priority = input("Enter priority (low/medium/high): ").strip().lower()
+        # Filtering in Python keeps this display logic easy to follow.
         tasks = [t for t in tasks if t.priority == priority]
     elif choice == VIEW_BY_COMPLETED:
         completed_choice = input("Show completed only? (yes/no): ").strip().lower()
@@ -144,6 +151,7 @@ def view_tasks():
         else:
             tasks = [t for t in tasks if not t.completed]
     elif choice == SORT_BY_DUE_DATE:
+        # Empty due dates fall back to an empty string so sorting still works.
         tasks = sorted(tasks, key=lambda x: x.due_date or "")
 
     # VIEW_ALL leaves tasks unchanged
@@ -186,6 +194,8 @@ def menu():
 
         choice = get_int_input("Choose an option: ", ADD_TASK, EXIT)
 
+        # This menu acts as the controller for the CLI: each branch hands work
+        # off to a focused function that handles one user action.
         if choice == ADD_TASK:
             add_task()
         elif choice == VIEW_TASKS:

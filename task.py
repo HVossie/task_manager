@@ -23,16 +23,17 @@ class Task:
         task_id is optional because it is assigned automatically 
         when stored in the database
         """
-        #Database identifier
+        # The database assigns this when a task is inserted; new in-memory tasks
+        # start with no ID.
         self.id = task_id
 
-        #Core task information
+        # Core user-facing data shown in the CLI and stored in SQLite.
         self.title = title
         self.description = description
         self.priority = priority
         self.due_date = due_date
 
-        #Task state
+        # This flag tracks whether the task has been finished.
         self.completed = completed
 
     def mark_completed(self):
